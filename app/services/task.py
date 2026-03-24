@@ -17,11 +17,26 @@ def generate_script(task_id, params):
     logger.info("\n\n## generating video script")
     video_script = params.video_script.strip()
     if not video_script:
-        video_script = llm.generate_script(
-            video_subject=params.video_subject,
-            language=params.video_language,
-            paragraph_number=params.paragraph_number,
-        )
+        custom_audio_file = params.custom_audio_file
+        # If custom audio is provided, transcribe it first and use transcript as script.
+        if custom_audio_file and os.path.exists(custom_audio_file):
+            transcript_path = path.join(utils.task_dir(task_id), "custom-audio.srt")
+            subtitle.create(audio_file=custom_audio_file, subtitle_file=transcript_path)
+            transcript_lines = subtitle.file_to_subtitles(transcript_path)
+            transcript_text = " ".join(
+                [item[2].strip() for item in transcript_lines if item[2].strip()]
+            ).strip()
+            if transcript_text:
+                video_script = transcript_text
+                logger.info("video script generated from custom audio transcript.")
+
+        # Fallback to LLM generation if still empty and subject is provided.
+        if not video_script and params.video_subject:
+            video_script = llm.generate_script(
+                video_subject=params.video_subject,
+                language=params.video_language,
+                paragraph_number=params.paragraph_number,
+            )
     else:
         logger.debug(f"video script: \n{video_script}")
 
@@ -123,19 +138,28 @@ def generate_audio(task_id, params, video_script):
 
 def generate_subtitle(task_id, params, video_script, sub_maker, audio_file):
     '''
-    Generate subtitle for the video script.
-    If subtitle generation is disabled or no subtitle maker is provided, it will return an empty string.
-    Otherwise, it will generate the subtitle using the specified provider.
+    Generate subtitle for the video script/audio.
+    If subtitle generation is disabled, it returns an empty string.
+    If no subtitle maker is provided (for example with custom audio), whisper is used.
     Returns:
         - subtitle_path: path to the generated subtitle file
     '''
     logger.info("\n\n## generating subtitle")
-    if not params.subtitle_enabled or sub_maker is None:
+    if not params.subtitle_enabled:
         return ""
 
     subtitle_path = path.join(utils.task_dir(task_id), "subtitle.srt")
     subtitle_provider = config.app.get("subtitle_provider", "edge").strip().lower()
     logger.info(f"\n\n## generating subtitle, provider: {subtitle_provider}")
+
+    if sub_maker is None:
+        logger.info("no subtitle maker provided, using whisper subtitle generation")
+        subtitle.create(audio_file=audio_file, subtitle_file=subtitle_path)
+        subtitle_lines = subtitle.file_to_subtitles(subtitle_path)
+        if not subtitle_lines:
+            logger.warning(f"subtitle file is invalid: {subtitle_path}")
+            return ""
+        return subtitle_path
 
     subtitle_fallback = False
     if subtitle_provider == "edge":

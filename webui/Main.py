@@ -488,6 +488,7 @@ right_panel = panel[2]
 
 params = VideoParams(video_subject="")
 uploaded_files = []
+uploaded_custom_audio = None
 
 with left_panel:
     with st.container(border=True):
@@ -645,6 +646,28 @@ with middle_panel:
         )
     with st.container(border=True):
         st.write(tr("Audio Settings"))
+        uploaded_custom_audio = st.file_uploader(
+            tr("Custom Audio File"),
+            type=["mp3", "wav", "m4a", "aac", "ogg", "flac"],
+            accept_multiple_files=False,
+            key="custom_audio_uploader",
+            help=tr(
+                "Upload a custom narration audio (MP3/WAV/M4A). If provided, this audio will be used for the final video."
+            ),
+        )
+        if uploaded_custom_audio:
+            custom_audio_dir = utils.storage_dir("custom_audios", create=True)
+            custom_audio_id = getattr(uploaded_custom_audio, "file_id", str(uuid4()))
+            custom_audio_path = os.path.join(
+                custom_audio_dir, f"{custom_audio_id}_{uploaded_custom_audio.name}"
+            )
+            with open(custom_audio_path, "wb") as f:
+                f.write(uploaded_custom_audio.getbuffer())
+            params.custom_audio_file = custom_audio_path
+            st.caption(f"{tr('Custom audio loaded')}: {uploaded_custom_audio.name}")
+            st.audio(custom_audio_path)
+        else:
+            params.custom_audio_file = None
 
         # 添加TTS服务器选择下拉框
         tts_servers = [
@@ -995,8 +1018,12 @@ start_button = st.button(tr("Generate Video"), use_container_width=True, type="p
 if start_button:
     config.save_config()
     task_id = str(uuid4())
-    if not params.video_subject and not params.video_script:
-        st.error(tr("Video Script and Subject Cannot Both Be Empty"))
+    if (
+        not params.video_subject
+        and not params.video_script
+        and not params.custom_audio_file
+    ):
+        st.error(tr("Video Script, Subject and Custom Audio Cannot All Be Empty"))
         scroll_to_bottom()
         st.stop()
 

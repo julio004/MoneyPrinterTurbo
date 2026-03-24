@@ -117,6 +117,10 @@
     "Pixabay API Key added successfully": "Pixabay API Key added successfully",
     "Select Pixabay API Key to delete": "Select Pixabay API Key to delete",
     "Delete Selected Pixabay API Key": "Delete Selected Pixabay API Key",
-    "Pixabay API Key deleted successfully": "Pixabay API Key deleted successfully"
+    "Pixabay API Key deleted successfully": "Pixabay API Key deleted successfully",
+    "Custom Audio File": "Custom Audio File",
+    "Upload a custom narration audio (MP3/WAV/M4A). If provided, this audio will be used for the final video.": "Upload a custom narration audio (MP3/WAV/M4A). If provided, this audio will be used for the final video.",
+    "Custom audio loaded": "Custom audio loaded",
+    "Video Script, Subject and Custom Audio Cannot All Be Empty": "Video Subject, Video Script and Custom Audio cannot all be empty"
   }
 }

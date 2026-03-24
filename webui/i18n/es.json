@@ -117,6 +117,10 @@
     "Pixabay API Key added successfully": "Clave API de Pixabay agregada correctamente",
     "Select Pixabay API Key to delete": "Selecciona la clave API de Pixabay que deseas eliminar",
     "Delete Selected Pixabay API Key": "Eliminar clave API de Pixabay seleccionada",
-    "Pixabay API Key deleted successfully": "Clave API de Pixabay eliminada correctamente"
+    "Pixabay API Key deleted successfully": "Clave API de Pixabay eliminada correctamente",
+    "Custom Audio File": "Archivo de audio personalizado",
+    "Upload a custom narration audio (MP3/WAV/M4A). If provided, this audio will be used for the final video.": "Sube un audio de narración personalizado (MP3/WAV/M4A). Si lo proporcionas, este audio se usará para el video final.",
+    "Custom audio loaded": "Audio personalizado cargado",
+    "Video Script, Subject and Custom Audio Cannot All Be Empty": "El tema del video, el guion y el audio personalizado no pueden estar todos vacíos"
   }
 }
