@@ -70,17 +70,37 @@ def search_videos_pexels(
             if duration < minimum_duration:
                 continue
             video_files = v["video_files"]
-            # loop through each url to determine the best quality
+            candidates = []
             for video in video_files:
-                w = int(video["width"])
-                h = int(video["height"])
-                if w == video_width and h == video_height:
-                    item = MaterialInfo()
-                    item.provider = "pexels"
-                    item.url = video["link"]
-                    item.duration = duration
-                    video_items.append(item)
-                    break
+                w = int(video.get("width", 0))
+                h = int(video.get("height", 0))
+                # Prefer videos that can be downscaled to target instead of upscaling.
+                if w >= video_width and h >= video_height:
+                    candidates.append(video)
+
+            if not candidates:
+                # Fallback: keep exact target resolution if available.
+                for video in video_files:
+                    w = int(video.get("width", 0))
+                    h = int(video.get("height", 0))
+                    if w == video_width and h == video_height:
+                        candidates.append(video)
+
+            if not candidates:
+                continue
+
+            best_video = max(
+                candidates,
+                key=lambda x: (
+                    int(x.get("width", 0)) * int(x.get("height", 0)),
+                    float(x.get("fps", 0) or 0),
+                ),
+            )
+            item = MaterialInfo()
+            item.provider = "pexels"
+            item.url = best_video["link"]
+            item.duration = duration
+            video_items.append(item)
         return video_items
     except Exception as e:
         logger.error(f"search videos failed: {str(e)}")
@@ -125,18 +145,22 @@ def search_videos_pixabay(
             if duration < minimum_duration:
                 continue
             video_files = v["videos"]
-            # loop through each url to determine the best quality
-            for video_type in video_files:
-                video = video_files[video_type]
-                w = int(video["width"])
-                # h = int(video["height"])
-                if w >= video_width:
-                    item = MaterialInfo()
-                    item.provider = "pixabay"
-                    item.url = video["url"]
-                    item.duration = duration
-                    video_items.append(item)
-                    break
+            video_list = list(video_files.values())
+            candidates = [video for video in video_list if int(video.get("width", 0)) >= video_width]
+            if not candidates:
+                candidates = video_list
+            if not candidates:
+                continue
+
+            best_video = max(
+                candidates,
+                key=lambda x: int(x.get("width", 0)) * int(x.get("height", 0)),
+            )
+            item = MaterialInfo()
+            item.provider = "pixabay"
+            item.url = best_video["url"]
+            item.duration = duration
+            video_items.append(item)
         return video_items
     except Exception as e:
         logger.error(f"search videos failed: {str(e)}")
